@@ -15,7 +15,7 @@
  *        BNode         : A class representing a BNode
  *    Additionally, it will contain a few functions working on Node
  * Author
- *    <your names here>
+ *    Joel Jossie, Gergo Medveczky
  ************************************************************************/
 
 #pragma once
@@ -98,7 +98,6 @@ inline void addRight (BNode <T> * pNode, BNode <T> * pAdd)
 template <class T>
 inline void addLeft (BNode <T> * pNode, const T & t)
 {
-
    auto pAdd = new BNode <T>(t);
    pAdd->pParent = pNode;
    pNode->pLeft = pAdd;
@@ -107,10 +106,9 @@ inline void addLeft (BNode <T> * pNode, const T & t)
 template <class T>
 inline void addLeft(BNode <T>* pNode, T && t)
 {
-   auto pAdd = new BNode <T>(t);
+   auto pAdd = new BNode <T>(std::forward<T>(t));
    pAdd->pParent = pNode;
    pNode->pLeft = pAdd;
-   
 }
 
 /******************************************************
@@ -128,7 +126,7 @@ void addRight (BNode <T> * pNode, const T & t)
 template <class T>
 void addRight(BNode <T>* pNode, T && t)
 {
-   auto pAdd = new BNode <T>(t);
+   auto pAdd = new BNode <T>(std::forward<T>(t));
    pAdd->pParent = pNode;
    pNode->pRight = pAdd;
 }
@@ -144,9 +142,9 @@ void clear(BNode <T> * & pThis)
    if (pThis == nullptr)
       return;
    
-   clear(pThis->pLeft);
-   clear(pThis->pRight);
-   delete pThis;
+   clear(pThis->pLeft);   // L
+   clear(pThis->pRight);  // R
+   delete pThis;          // V
    pThis = nullptr;
 }
 
@@ -169,20 +167,15 @@ BNode <T> * copy(const BNode <T> * pSrc)
    // Copy if pSource is not null
    if(pSrc == nullptr)
       return nullptr;
-   auto destination = new BNode <T>(pSrc->data);
-   destination->pLeft = copy(pSrc->pLeft);
-   
-   if (destination->pLeft != nullptr)
-   {
+   auto destination = new BNode <T>(pSrc->data);  // V
+
+   destination->pLeft = copy(pSrc->pLeft);        // L
+   if (destination->pLeft)
       destination->pLeft->pParent = destination;
-   }
-   
-   destination->pRight = copy(pSrc->pRight);
-   
-   if (destination->pRight != nullptr)
-   {
+
+   destination->pRight = copy(pSrc->pRight);      // R
+   if (destination->pRight)
       destination->pRight->pParent = destination;
-   }
 
    return destination;
 }
@@ -201,17 +194,22 @@ void assign(BNode <T> * & pDest, const BNode <T>* pSrc)
       return;
    }
    
-   if (pDest == nullptr && pSrc != nullptr)
+   if (pDest == nullptr)
    {
-      
-      pDest = new BNode <T>(pSrc->data);
-      assign(pDest->pRight, pSrc->pRight);
-      assign(pDest->pLeft, pSrc->pLeft);
+      pDest = new BNode <T>(pSrc->data);   // V
+      assign(pDest->pRight, pSrc->pRight); // R
+      assign(pDest->pLeft, pSrc->pLeft);   // L
    }
-   if (pDest != nullptr && pSrc != nullptr)
+   else
    {
-      pDest->data = pSrc->data;
-      assign(pDest->pRight, pSrc->pRight);
-      assign(pDest->pLeft, pSrc->pLeft);
+      pDest->data = pSrc->data;            // V
+      assign(pDest->pRight, pSrc->pRight); // R
+      assign(pDest->pLeft, pSrc->pLeft);   // L
    }
+
+   // Connect any newly assigned children to this one as a parent
+   if (pDest->pRight)
+      pDest->pRight->pParent = pDest;
+   if (pDest->pLeft)
+      pDest->pLeft->pParent = pDest;
 }
